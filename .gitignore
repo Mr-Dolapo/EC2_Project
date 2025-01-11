@@ -1,0 +1,21 @@
+# Terraform State
+*.tfstate
+*.tfstate.*
+
+# Crash Log Files
+crash.log
+
+# Exclude .terraform directory
+.terraform/
+.terraform.lock.hcl
+
+# Sensitive files
+variables.tf
+*.tfvars
+*.tfvars.json
+credentials
+*_secrets
+
+# Ignore backup files
+*.bak
+*.backup
