@@ -66,18 +66,18 @@ resource "aws_security_group" "default_sg" {
   }
 }
 
-resource "aws_key_pair" "default_key_pair" {
-  key_name   = "default-key"
-  public_key = file("~/.ssh/default_key.pub")
-}
+# resource "aws_key_pair" "default_key_pair" {
+#   key_name   = "default-key"
+#   public_key = file("~/.ssh/default_key.pub")
+# }
 
 resource "aws_instance" "default_node" {
   ami                    = data.aws_ami.server_ami.id
   instance_type          = "t2.micro"
-  key_name               = aws_key_pair.default_key_pair.id
+  # key_name               = aws_key_pair.default_key_pair.id
   vpc_security_group_ids = [aws_security_group.default_sg.id]
   subnet_id              = aws_subnet.default_public_subnet.id
-  user_data = file("userdata.tpl")
+  # user_data = file("userdata.tpl")
 
   root_block_device {
     volume_size = 10
@@ -87,12 +87,12 @@ resource "aws_instance" "default_node" {
     Name = "default-node"
   }
 
-  provisioner "local-exec" {
-    command = templatefile("${var.host_os}-ssh-config.tpl", {
-        hostname = self.public_ip,
-        user = "ubuntu",
-        identityfile = "~/.ssh/default_key"
-    })
-    interpreter = var.host_os == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
-  }
+  # provisioner "local-exec" {
+  #   command = templatefile("${var.host_os}-ssh-config.tpl", {
+  #       hostname = self.public_ip,
+  #       user = "ubuntu",
+  #       identityfile = "~/.ssh/default_key"
+  #   })
+  #   interpreter = var.host_os == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
+  # }
 }
