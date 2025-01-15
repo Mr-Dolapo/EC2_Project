@@ -1,4 +1,4 @@
-#!/bin/basH
+#!/bin/bash
 
 # fail ony any error
 set -eu
