@@ -1,61 +1,61 @@
-resource "aws_vpc" "default_vpc" {
-  cidr_block           = "10.123.0.0/16"
+resource "aws_vpc" "vpc" {
+  cidr_block           = var.cidr_block_vpc
   enable_dns_hostnames = true
   enable_dns_support   = true
 
   tags = {
-    name = "default"
+    Name = "${var.environment}-vpc"
   }
 }
 
-resource "aws_subnet" "default_public_subnet" {
-  vpc_id                  = aws_vpc.default_vpc.id
-  cidr_block              = "10.123.1.0/24"
+resource "aws_subnet" "public_subnet" {
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.cidr_block_public_subnet
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
 
   tags = {
-    Name = "default-public-subnet"
+    Name = "${var.environment}-public-subnet"
   }
 }
 
-resource "aws_internet_gateway" "default_igw" {
-  vpc_id = aws_vpc.default_vpc.id
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc.id
 
   tags = {
-    Name = "default-vpc"
+    Name = "${var.environment}-igw"
   }
 }
 
-resource "aws_route_table" "default_route_table" {
-  vpc_id = aws_vpc.default_vpc.id
+resource "aws_route_table" "route_table" {
+  vpc_id = aws_vpc.vpc.id
 
   tags = {
-    Name = "default-route-table"
+    Name = "${var.environment}-route-table"
   }
 }
 
-resource "aws_route" "default_route" {
-  route_table_id         = aws_route_table.default_route_table.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.default_igw.id
+resource "aws_route" "route" {
+  route_table_id         = aws_route_table.route_table.id
+  destination_cidr_block = var.cidr_block_destination_igw
+  gateway_id             = aws_internet_gateway.igw.id
 }
 
-resource "aws_route_table_association" "default_association" {
-  subnet_id      = aws_subnet.default_public_subnet.id
-  route_table_id = aws_route_table.default_route_table.id
+resource "aws_route_table_association" "association" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.route_table.id
 }
 
-resource "aws_security_group" "default_sg" {
-  name        = "default-sg"
-  description = "default security group"
-  vpc_id      = aws_vpc.default_vpc.id
+resource "aws_security_group" "security_group" {
+  name        = "${var.environment}-security-group"
+  description = "${var.environment} security group"
+  vpc_id      = aws_vpc.vpc.id
 
   ingress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["81.104.136.168/32"]
+    cidr_blocks = [jsondecode(data.aws_secretsmanager_secret_version.ip_address_version.secret_string)["my-ip-address"]]
   }
 
   egress {
@@ -71,12 +71,12 @@ resource "aws_security_group" "default_sg" {
 #   public_key = file("~/.ssh/default_key.pub")
 # }
 
-resource "aws_instance" "default_node" {
-  ami                    = data.aws_ami.server_ami.id
-  instance_type          = "t2.micro"
+resource "aws_instance" "node" {
+  ami           = data.aws_ami.server_ami.id
+  instance_type = var.instance_type
   # key_name               = aws_key_pair.default_key_pair.id
-  vpc_security_group_ids = [aws_security_group.default_sg.id]
-  subnet_id              = aws_subnet.default_public_subnet.id
+  vpc_security_group_ids = [aws_security_group.security_group.id]
+  subnet_id              = aws_subnet.public_subnet.id
   # user_data = file("userdata.tpl")
 
   root_block_device {
@@ -84,7 +84,7 @@ resource "aws_instance" "default_node" {
   }
 
   tags = {
-    Name = "default-node"
+    Name = "${var.environment}-node"
   }
 
   # provisioner "local-exec" {

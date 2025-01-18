@@ -1,3 +1,3 @@
-output "dev_ip" {
-    value = aws_instance.default_node.public_ip
+output "node_ip" {
+  value = aws_instance.node.public_ip
 }
